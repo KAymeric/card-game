@@ -23,10 +23,10 @@ class Card
 
     #[ORM\ManyToOne(inversedBy: 'cards')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Set $setId = null;
+    private ?Set $set = null;
 
     #[ORM\ManyToOne(inversedBy: 'cards')]
-    private ?Type $typeId = null;
+    private ?Type $type = null;
 
     /**
      * @var Collection<int, Stat>
@@ -56,26 +56,26 @@ class Card
         return $this;
     }
 
-    public function getSetId(): ?Set
+    public function getSet(): ?Set
     {
-        return $this->setId;
+        return $this->set;
     }
 
-    public function setSetId(?Set $setId): static
+    public function setSet(?Set $set): static
     {
-        $this->setId = $setId;
+        $this->set = $set;
 
         return $this;
     }
 
-    public function getTypeId(): ?Type
+    public function getType(): ?Type
     {
-        return $this->typeId;
+        return $this->type;
     }
 
-    public function setTypeId(?Type $typeId): static
+    public function setType(?Type $type): static
     {
-        $this->typeId = $typeId;
+        $this->type = $type;
 
         return $this;
     }

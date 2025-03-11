@@ -22,7 +22,7 @@ class Type
     private ?string $name = null;
 
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
-    private ?Image $imageId = null;
+    private ?Image $image = null;
 
     /**
      * @var Collection<int, Card>
@@ -52,14 +52,14 @@ class Type
         return $this;
     }
 
-    public function getImageId(): ?Image
+    public function getImage(): ?Image
     {
-        return $this->imageId;
+        return $this->image;
     }
 
-    public function setImageId(?Image $imageId): static
+    public function setImage(?Image $image): static
     {
-        $this->imageId = $imageId;
+        $this->image = $image;
 
         return $this;
     }
@@ -76,7 +76,7 @@ class Type
     {
         if (!$this->cards->contains($card)) {
             $this->cards->add($card);
-            $card->setTypeId($this);
+            $card->setType($this);
         }
 
         return $this;
@@ -86,8 +86,8 @@ class Type
     {
         if ($this->cards->removeElement($card)) {
             // set the owning side to null (unless already changed)
-            if ($card->getTypeId() === $this) {
-                $card->setTypeId(null);
+            if ($card->getType() === $this) {
+                $card->setType(null);
             }
         }
 
