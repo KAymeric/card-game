@@ -22,7 +22,7 @@ class Type
     private ?string $name = null;
 
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
-    private ?Image $image = null;
+    private ?CustomMedia $image = null;
 
     /**
      * @var Collection<int, Card>
@@ -52,12 +52,12 @@ class Type
         return $this;
     }
 
-    public function getImage(): ?Image
+    public function getCustomMedia(): ?CustomMedia
     {
         return $this->image;
     }
 
-    public function setImage(?Image $image): static
+    public function setCustomMedia(?CustomMedia $image): static
     {
         $this->image = $image;
 

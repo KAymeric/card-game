@@ -2,41 +2,45 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
 use App\Repository\SetRepository;
 use App\Traits\HistoryTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
+
+#[ApiResource(normalizationContext: ['groups' => ['set:read']])]
 #[ORM\Entity(repositoryClass: SetRepository::class)]
 class Set
 {
+
     use HistoryTrait;
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['set:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['set:read'])]
     private ?string $name = null;
+
+    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    private ?CustomMedia $image = null;
 
     /**
      * @var Collection<int, Card>
      */
-    #[ORM\OneToMany(targetEntity: Card::class, mappedBy: 'setId', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: Card::class, mappedBy: 'set', orphanRemoval: true)]
+    #[Groups(['set:read'])]
     private Collection $cards;
-
-    /**
-     * @var Collection<int, Stat>
-     */
-    #[ORM\ManyToMany(targetEntity: Stat::class, mappedBy: 'sets')]
-    private Collection $stats;
 
     public function __construct()
     {
         $this->cards = new ArrayCollection();
-        $this->stats = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -52,6 +56,18 @@ class Set
     public function setName(string $name): static
     {
         $this->name = $name;
+
+        return $this;
+    }
+
+    public function getImage(): ?CustomMedia
+    {
+        return $this->image;
+    }
+
+    public function setImage(?CustomMedia $image): static
+    {
+        $this->image = $image;
 
         return $this;
     }
@@ -81,33 +97,6 @@ class Set
             if ($card->getSet() === $this) {
                 $card->setSet(null);
             }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Stat>
-     */
-    public function getStats(): Collection
-    {
-        return $this->stats;
-    }
-
-    public function addStat(Stat $stat): static
-    {
-        if (!$this->stats->contains($stat)) {
-            $this->stats->add($stat);
-            $stat->addSet($this);
-        }
-
-        return $this;
-    }
-
-    public function removeStat(Stat $stat): static
-    {
-        if ($this->stats->removeElement($stat)) {
-            $stat->removeSet($this);
         }
 
         return $this;
