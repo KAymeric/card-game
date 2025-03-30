@@ -1,6 +1,11 @@
 api_platform:
     title: Hello API Platform
     version: 1.0.0
+    swagger:
+        api_keys:
+            -   name: 'Authorization'
+                key: 'Bearer'
+                type: 'header'
     formats:
         jsonld: [ 'application/ld+json' ]
     defaults:
