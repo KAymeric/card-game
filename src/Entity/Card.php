@@ -2,56 +2,52 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
 use App\Repository\CardRepository;
 use App\Traits\HistoryTrait;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
+#[ApiResource(normalizationContext: ['groups' => ['card:read']])]
 #[ORM\Entity(repositoryClass: CardRepository::class)]
 class Card
 {
-    use HistoryTrait;
 
+    use HistoryTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['card:read', 'set:read'])]
     private ?int $id = null;
 
+    #[Groups(['card:read', 'set:read'])]
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
-    #[ORM\ManyToOne(inversedBy: 'cards')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Set $set = null;
-
-    #[ORM\ManyToOne(inversedBy: 'cards')]
+    #[ORM\ManyToOne(inversedBy: 'set')]
     private ?Type $type = null;
 
-    /**
-     * @var Collection<int, Stat>
-     */
-    #[ORM\ManyToMany(targetEntity: Stat::class, mappedBy: 'cards')]
-    private Collection $stats;
+    #[Groups(['card:read'])]
+    #[ORM\ManyToOne(targetEntity: Set::class, inversedBy: 'cards')]
+    #[ORM\JoinColumn(name: 'set_id', referencedColumnName: 'id')]
+    private ?Set $set = null;
 
-    public function __construct()
-    {
-        $this->stats = new ArrayCollection();
-    }
+    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    private ?CustomMedia $image = null;
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getName(): ?string
+    public function getType(): ?Type
     {
-        return $this->name;
+        return $this->type;
     }
 
-    public function setName(string $name): static
+    public function setType(?Type $type): static
     {
-        $this->name = $name;
+        $this->type = $type;
 
         return $this;
     }
@@ -68,41 +64,26 @@ class Card
         return $this;
     }
 
-    public function getType(): ?Type
+    public function getImage(): ?CustomMedia
     {
-        return $this->type;
+        return $this->image;
     }
 
-    public function setType(?Type $type): static
+    public function setImage(?CustomMedia $image): static
     {
-        $this->type = $type;
+        $this->image = $image;
 
         return $this;
     }
 
-    /**
-     * @return Collection<int, Stat>
-     */
-    public function getStats(): Collection
+    public function getName(): ?string
     {
-        return $this->stats;
+        return $this->name;
     }
 
-    public function addStat(Stat $stat): static
+    public function setName(string $name): static
     {
-        if (!$this->stats->contains($stat)) {
-            $this->stats->add($stat);
-            $stat->addCard($this);
-        }
-
-        return $this;
-    }
-
-    public function removeStat(Stat $stat): static
-    {
-        if ($this->stats->removeElement($stat)) {
-            $stat->removeCard($this);
-        }
+        $this->name = $name;
 
         return $this;
     }
