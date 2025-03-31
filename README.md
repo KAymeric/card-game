@@ -76,6 +76,14 @@ This application is built with PHP and uses Symfony with Docker setup. It also u
 
    This allows you to access protected endpoints directly via Swagger.
 
+4. **Disable Authentication**
+
+   If you want to disable authentication for easier tests, just comment/uncomment the following lines in security.yaml
+   ```
+   - { path: ^/, roles: IS_AUTHENTICATED_FULLY  } # comment this to desactivate the authentication
+   # - { path: ^/, roles: PUBLIC_ACCESS  } # uncomment this to desactivate the authentication
+   ```
+
 ## Data Fixtures
 
 To load example data into your database, run the following command:
