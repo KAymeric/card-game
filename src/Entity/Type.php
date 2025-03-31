@@ -2,12 +2,15 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
 use App\Repository\TypeRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use App\Traits\HistoryTrait;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
+#[ApiResource(normalizationContext: ['groups' => ['type:read']])]
 #[ORM\Entity(repositoryClass: TypeRepository::class)]
 class Type
 {
@@ -16,9 +19,11 @@ class Type
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['type:read', 'card:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 127)]
+    #[Groups(['type:read', 'card:read'])]
     private ?string $name = null;
 
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
@@ -27,12 +32,14 @@ class Type
     /**
      * @var Collection<int, Card>
      */
-    #[ORM\OneToMany(targetEntity: Card::class, mappedBy: 'typeId')]
+    #[ORM\OneToMany(targetEntity: Card::class, mappedBy: 'type')]
     private Collection $cards;
 
     public function __construct()
     {
         $this->cards = new ArrayCollection();
+        $this->updatedAt = new \DateTimeImmutable();
+
     }
 
     public function getId(): ?int

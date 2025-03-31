@@ -63,6 +63,8 @@ final class TypeController extends AbstractController {
         $data = $request->getContent();
         $type = $serializer->deserialize($data, Type::class, 'json');
 
+        $type->updatedAt = (new \DateTimeImmutable());
+
         $this->entityManager->persist($type);
         $this->entityManager->flush();
 

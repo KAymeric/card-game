@@ -55,23 +55,6 @@ class CardController extends AbstractController
     /**
      * @throws InvalidArgumentException
      */
-    #[Route('/', name: 'card_create', methods: ['POST'])]
-    public function create(Request $request, SerializerInterface $serializer, CacheInterface $cache): JsonResponse
-    {
-        $data = $request->getContent();
-        $card = $serializer->deserialize($data, Card::class, 'json');
-
-        $this->entityManager->persist($card);
-        $this->entityManager->flush();
-
-        $cache->delete('cards_list');
-
-        return new JsonResponse(['message' => 'Card created'], Response::HTTP_CREATED);
-    }
-
-    /**
-     * @throws InvalidArgumentException
-     */
     #[Route('/{id}', name: 'card_update', methods: ['PUT'])]
     public function update(int $id, Request $request, CardRepository $cardRepository, SerializerInterface $serializer, CacheInterface $cache): JsonResponse
     {

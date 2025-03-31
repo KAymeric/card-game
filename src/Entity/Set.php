@@ -41,6 +41,8 @@ class Set
     public function __construct()
     {
         $this->cards = new ArrayCollection();
+        $this->updatedAt = new \DateTimeImmutable();
+
     }
 
     public function getId(): ?int

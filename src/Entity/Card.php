@@ -14,6 +14,12 @@ class Card
 {
 
     use HistoryTrait;
+
+    public function __construct()
+    {
+        $this->updatedAt = new \DateTimeImmutable();
+
+    }
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -24,10 +30,11 @@ class Card
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
-    #[ORM\ManyToOne(inversedBy: 'set')]
+    #[Groups(['card:read', 'set:read', 'card:write'])]
+    #[ORM\ManyToOne(targetEntity: Type::class, cascade: ['persist'], fetch: 'EAGER', inversedBy: 'cards')]
     private ?Type $type = null;
 
-    #[Groups(['card:read'])]
+    #[Groups(['card:read', 'set:read'])]
     #[ORM\ManyToOne(targetEntity: Set::class, inversedBy: 'cards')]
     #[ORM\JoinColumn(name: 'set_id', referencedColumnName: 'id')]
     private ?Set $set = null;

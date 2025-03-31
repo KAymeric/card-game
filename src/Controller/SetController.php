@@ -2,33 +2,32 @@
 
 namespace App\Controller;
 
-use Psr\Cache\InvalidArgumentException;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Entity\Card;
+use App\Entity\Set;
+use App\Repository\SetRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
-use App\Repository\SetRepository;
-use App\Entity\Set;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 
 #[Route('/api/set')]
-final class SetController extends AbstractController {
+class SetController extends AbstractController
+{
     private EntityManagerInterface $entityManager;
 
     public function __construct(EntityManagerInterface $entityManager)
     {
         $this->entityManager = $entityManager;
+
     }
 
-    /**
-     * @throws InvalidArgumentException
-     */
-    #[Route('/', name: 'sets', methods: ['GET'])]
-    public function getAll(SetRepository $setRepository, SerializerInterface $serializer, CacheInterface $cache): JsonResponse
+    #[Route('/', name: 'set_index', methods: ['GET'])]
+    public function index(SetRepository $setRepository, SerializerInterface $serializer, CacheInterface $cache): JsonResponse
     {
         $setsJson = $cache->get('sets_list', function (ItemInterface $item) use ($setRepository, $serializer) {
             $item->expiresAfter(3600);
@@ -39,28 +38,24 @@ final class SetController extends AbstractController {
         return new JsonResponse($setsJson, Response::HTTP_OK, [], true);
     }
 
-    /**
-     * @throws InvalidArgumentException
-     */
-    #[Route('/{id}', name: 'set_get', methods: ['GET'])]
-    public function getOne(int $id, SetRepository $setRepository, SerializerInterface $serializer, CacheInterface $cache): JsonResponse
+    #[Route('/{id}', name: 'set_show', methods: ['GET'])]
+    public function show(int $id, SetRepository $setRepository, SerializerInterface $serializer, CacheInterface $cache): JsonResponse
     {
+
         $setJson = $cache->get('set_' . $id, function (ItemInterface $item) use ($setRepository, $serializer, $id) {
             $item->expiresAfter(3600);
             $set = $setRepository->find($id);
-
             if (!$set) {
                 throw new \Exception('Set not found');
             }
-
-            return $serializer->serialize($set, 'json', ['groups' => 'set:read']);
+            return $serializer->serialize($set, 'json', ['groups' => ['set:read', 'card:read', 'type:read']]);
         });
 
         return new JsonResponse($setJson, Response::HTTP_OK, [], true);
     }
 
     #[Route('/', name: 'set_create', methods: ['POST'])]
-    public function create(Request $request, SerializerInterface $serializer): JsonResponse
+    public function create(Request $request, SerializerInterface $serializer, CacheInterface $cache): JsonResponse
     {
         $data = $request->getContent();
         $set = $serializer->deserialize($data, Set::class, 'json');
@@ -68,41 +63,74 @@ final class SetController extends AbstractController {
         $this->entityManager->persist($set);
         $this->entityManager->flush();
 
-        return new JsonResponse(null, Response::HTTP_CREATED);
+        $cache->delete('sets_list');
+
+        return new JsonResponse(['message' => 'Set created'], Response::HTTP_CREATED);
     }
 
-    /**
-     * @throws InvalidArgumentException
-     */
     #[Route('/{id}', name: 'set_update', methods: ['PUT'])]
-    public function update(int $id, Request $request, SetRepository $setRepository, CacheInterface $cache, SerializerInterface $serializer): JsonResponse
+    public function update(int $id, Request $request, SetRepository $setRepository, SerializerInterface $serializer, CacheInterface $cache): JsonResponse
     {
-        $data = $request->getContent();
-        $set = $serializer->deserialize($data, Set::class, 'json');
+        $set = $setRepository->find($id);
 
-        $setToUpdate = $setRepository->find($id);
-        $setToUpdate->setName($set->getName());
-        $setToUpdate->setCards($set->getCards());
-        $setToUpdate->setStats($set->getStats());
+        if (!$set) {
+            return new JsonResponse(['error' => 'Set not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $data = $request->getContent();
+        $updatedSet = $serializer->deserialize($data, Set::class, 'json');
+
+        $set->setName($updatedSet->getName());
+        $set->setImage($updatedSet->getImage());
 
         $this->entityManager->flush();
+
+        $cache->delete('sets_list');
         $cache->delete('set_' . $id);
-        return new JsonResponse(null, Response::HTTP_OK);
+
+        return new JsonResponse(['message' => 'Set updated'], Response::HTTP_OK);
     }
 
-    /**
-     * @throws InvalidArgumentException
-     */
     #[Route('/{id}', name: 'set_delete', methods: ['DELETE'])]
     public function delete(int $id, SetRepository $setRepository, CacheInterface $cache): JsonResponse
     {
         $set = $setRepository->find($id);
-        $set->setStatus('deleted');
+
+        if (!$set) {
+            return new JsonResponse(['error' => 'Set not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $this->entityManager->remove($set);
         $this->entityManager->flush();
+
         $cache->delete('sets_list');
         $cache->delete('set_' . $id);
 
+        return new JsonResponse(['message' => 'Set deleted'], Response::HTTP_NO_CONTENT);
+    }
 
-        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    #[Route('/{setId}/card', name: 'create_card_for_set', methods: ['POST'])]
+    public function createCardForSet(int $setId, Request $request, SetRepository $setRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager, CacheInterface $cache): JsonResponse
+    {
+        // Récupérer l'ensemble (Set) par ID
+        $set = $setRepository->find($setId);
+
+        if (!$set) {
+            return new JsonResponse(['error' => 'Set not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        // Désérialiser les données pour créer la carte
+        $data = $request->getContent();
+        $card = $serializer->deserialize($data, Card::class, 'json');
+
+        // Assigner l'ensemble (Set) à la carte
+        $card->setSet($set);
+
+        // Sauvegarder la carte
+        $entityManager->persist($card);
+        $entityManager->flush();
+        $cache->delete('sets_list');
+        $cache->delete('set_' . $setId);
+        return new JsonResponse(null, Response::HTTP_CREATED);
     }
 }

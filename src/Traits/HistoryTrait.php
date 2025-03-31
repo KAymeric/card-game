@@ -16,10 +16,16 @@ trait HistoryTrait {
         return $this->updatedAt;
     }
 
-    public function setUpdatedAt(\DateTimeImmutable $updatedAt): static
+    /**
+     * @throws \DateMalformedStringException
+     */
+    public function setUpdatedAt(string|\DateTimeImmutable $updatedAt): static
     {
-        $this->updatedAt = $updatedAt;
+        if (!$updatedAt instanceof \DateTimeImmutable) {
+            $updatedAt = new \DateTimeImmutable($updatedAt);
+        }
 
+        $this->updatedAt = $updatedAt;
         return $this;
     }
 
