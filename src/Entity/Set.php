@@ -34,8 +34,8 @@ class Set
     /**
      * @var Collection<int, Card>
      */
-    #[ORM\OneToMany(targetEntity: Card::class, mappedBy: 'set', orphanRemoval: true)]
-    #[Groups(['set:read'])]
+    #[ORM\OneToMany(targetEntity: Card::class, fetch: 'EAGER', mappedBy: 'set', orphanRemoval: true)]
+    #[Groups(['set:read', 'card:read'])]
     private Collection $cards;
 
     public function __construct()
