@@ -13,27 +13,20 @@ This application is built with PHP and uses Symfony with Docker setup. It also u
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/MazBazDev/your-repository.git
-   cd your-repository
+   git clone https://github.com/KAymeric/card-game.git
+   cd card-game
    ```
-
-2. **Install PHP dependencies using Composer:**
-
-   ```bash
-   composer install
-   ```
-
-3. **Setup Docker:**
-
-   The project uses Symfony's basic Docker setup. Use the provided `docker-compose.yml` file to bring the containers up. Run:
-
-   ```bash
-   docker-compose up -d
-   ```
+   
+2. **Setup Docker:**
+   1. If not already done, [install Docker Compose](https://docs.docker.com/compose/install/) (v2.10+)
+   2. Run `docker compose build --no-cache` to build fresh images
+   3. Run `docker compose up --pull always -d --wait` to set up and start a fresh Symfony project
+   4. Open `https://localhost` in your favorite web browser and [accept the auto-generated TLS certificate](https://stackoverflow.com/a/15076602/1352334)
+   5. Run `docker compose down --remove-orphans` to stop the Docker containers.
 
    This will start the web service, database and any other needed services.
 
-4. **Configure environment variables:**
+3. **Configure environment variables:**
 
    Duplicate the `.env` file into `.env.local` and adjust your configurations if needed (especially the database connection parameters).
 
@@ -54,6 +47,8 @@ This application is built with PHP and uses Symfony with Docker setup. It also u
    ```bash
    php bin/console lexik:jwt:generate-keypair
    ```
+   
+    /!\ To disable authentication, see the access_control section of the `security.yaml` file
 
 2. **Obtain a Token:**
 
@@ -127,4 +122,4 @@ This will execute tests for both the entities (like GlobalStats) and services (s
 - **Environment:**  
   The Docker setup provides a fast way to spin up the application. Make sure you have Docker and Docker Compose installed.
 
-Enjoy developing and testing your application!
+Enjoy developing and testing our application!
