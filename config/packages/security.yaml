@@ -42,8 +42,9 @@ security:
     access_control:
         - { path: ^/api/login, roles: PUBLIC_ACCESS  }
         - { path: ^/api/docs, roles: PUBLIC_ACCESS }
-        # - { path: ^/, roles: IS_AUTHENTICATED_FULLY  } # comment this to desactivate the authentication
-        # - { path: ^/, roles: PUBLIC_ACCESS  } // uncomment this to desactivate the authentication
+        - { path: ^/api/global-stats, roles: PUBLIC_ACCESS  }
+        - { path: ^/, roles: IS_AUTHENTICATED_FULLY  } # comment this to desactivate the authentication
+        # - { path: ^/, roles: PUBLIC_ACCESS  } # uncomment this to desactivate the authentication
 
 when@test:
     security:
