@@ -101,6 +101,14 @@ class GlobalStatsService
      * - The remaining part.
      * The values are converted to integers and summed per group.
      */
+    /**
+     * Returns all global statistics grouped by prefix.
+     * For each statistic, the key is split into:
+     * - The prefix (the part before the dot, or the entire key if no dot exists)
+     * - The remaining part.
+     * The values are converted to integers and summed per group.
+     * Additionally, the entity counts are added under the key "entity".
+     */
     public function getStats(): array
     {
         $stats = $this->entityManager->getRepository(GlobalStats::class)->findAll();
@@ -131,6 +139,9 @@ class GlobalStatsService
                 }
             }
         }
+
+        $grouped['entity'] = $this->getEntityCounts();
+
         return $grouped;
     }
 }

@@ -1,42 +1,42 @@
 # Card Game Application
 
-This application is built with PHP and uses Symfony with Docker setup. It also uses Composer for dependency management.
+This application is built with PHP using the Symfony framework and a Docker setup. It also utilizes Composer for dependency management.
 
 ## Requirements
 
 - Docker and Docker Compose
-- PHP (local or via Docker)
+- PHP (local installation or via Docker)
 - Composer
 
 ## Setup Application
 
-1. **Clone the repository:**
+1. **Clone the Repository:**
 
    ```bash
    git clone https://github.com/KAymeric/card-game.git
    cd card-game
    ```
-   
+
 2. **Setup Docker:**
-   1. If not already done, [install Docker Compose](https://docs.docker.com/compose/install/) (v2.10+)
-   2. Run `docker compose build --no-cache` to build fresh images
-   3. Run `docker compose up --pull always -d --wait` to set up and start a fresh Symfony project
-   4. Open `https://localhost` in your favorite web browser and [accept the auto-generated TLS certificate](https://stackoverflow.com/a/15076602/1352334)
-   5. Run `docker compose down --remove-orphans` to stop the Docker containers.
+    1. Ensure you have [Docker Compose installed](https://docs.docker.com/compose/install/) (v2.10+).
+    2. Run `docker compose build --no-cache` to build fresh images.
+    3. Run `docker compose up --pull always -d --wait` to set up and start a fresh Symfony project.
+    4. Open `https://localhost` in your browser and [accept the auto-generated TLS certificate](https://stackoverflow.com/a/15076602/1352334).
+    5. Run `docker compose down --remove-orphans` to stop the Docker containers when needed.
 
-   This will start the web service, database and any other needed services.
+   This setup starts the web service, database, and any other necessary services.
 
-3. **Configure environment variables:**
+3. **Configure Environment Variables:**
 
    Duplicate the `.env` file into `.env.local` and adjust your configurations if needed (especially the database connection parameters).
 
 ## Swagger API Documentation
 
-- Once the application is running, you can access the API documentation via Swagger at:
+Once the application is running, you can access the API documentation via Swagger at:
 
-  ```
-  http://localhost/api/doc
-  ```
+```
+http://localhost/api/doc
+```
 
 ## JWT Token Creation and Use
 
@@ -47,29 +47,30 @@ This application is built with PHP and uses Symfony with Docker setup. It also u
    ```bash
    php bin/console lexik:jwt:generate-keypair
    ```
-   
-    /!\ To disable authentication, see the access_control section of the `security.yaml` file
+
+   > **Note:** To disable authentication temporarily, see the `access_control` section in the `security.yaml` file.
 
 2. **Obtain a Token:**
 
    Use the login endpoint (usually `POST /login_check`) with valid credentials:
-   Username: **John**
-   Password: **Doe**
+    - Username: **John**
+    - Password: **Doe**
+
    ```bash
    curl -X POST "http://localhost/login_check" -H "Content-Type: application/json" -d '{"username":"John", "password":"Doe"}'
    ```
 
-   This will return a JSON with your JWT token.
+   This returns a JSON response with your JWT token.
 
 3. **Using JWT in Swagger:**
 
-   In the Swagger UI, click on the "Authorize" button and enter:
+   In the Swagger UI, click the "Authorize" button and enter:
 
    ```
    Bearer <your_jwt_token>
    ```
 
-   This allows you to access protected endpoints directly via Swagger.
+   This authorizes you to access protected endpoints directly via Swagger.
 
 4. **Disable Authentication**
 
@@ -81,45 +82,70 @@ This application is built with PHP and uses Symfony with Docker setup. It also u
 
 ## Data Fixtures
 
-To load example data into your database, run the following command:
+To load example data into your database, run:
 
 ```bash
 php bin/console doctrine:fixtures:load
 ```
 
-This will load the configured fixtures (if any) into your database.
+This command loads the configured fixtures (if any) into your database.
 
 ## Entities Overview
 
-The application includes several entities. Some key ones are:
+The application includes several entities. Key ones include:
 
 - **GlobalStats:**  
-  Used to store and update global statistics such as route counts. The entity has a value field (as a string) and methods to increment this value.
+  This entity stores and updates global statistics such as route counts. It has a `key` field (a string identifying the statistic) and a `value` field (also stored as a string but used as a counter).
+    - **Increment Functionality:**  
+      The entity includes an `incrementValue()` method which converts the stored string to an integer, increments it, and saves it back as a string.
 
-- *Other entities:*  
-  Additional entities (related to card-game functionality) may be located in the `/src/Entity` folder.
+- **Other Entities:**  
+  Additional entities (related to the card-game functionality) are located in the `/src/Entity` folder.
 
 ## Global Statistics & Middleware
 
-- **Global Statistics:**  
-  The application tracks usage statistics through the `GlobalStats` entity. Routes are registered with keys (e.g., `route.test`, `route.api_doc`, etc.) and corresponding counts.
+### Global Statistics
 
-- **Middleware:**  
-  A custom middleware is used to update these statistics on every request. The middleware calls the `GlobalStatsService` to update or create records. This ensures every route access is tracked and aggregated.
+- **Purpose:**  
+  The application tracks usage statistics via the `GlobalStats` entity.
+- **Implementation:**
+    - **Keys:**  
+      Keys follow a naming convention such as `route.api_doc`, `user_agent.Chrome`, or `total_request`. This allows you to group and aggregate statistics by prefix.
+    - **Service:**  
+      The `GlobalStatsService` provides methods to increment counts for different types of statistics (routes, user agents, total requests) and to aggregate these statistics with a `getStats()` method.
+
+### Middleware
+
+- **Custom Middleware:**  
+  A custom event listener (`RequestListener`) intercepts every HTTP request:
+    - **Route Counting:**  
+      It extracts the route from the request and calls `incrementRouteCount()`.
+    - **User Agent Tracking:**  
+      It extracts the User-Agent header, processes it (using a helper method to return a generic browser name like "Chrome" or "Firefox"), and calls `incrementUserAgent()`.
+    - **Total Request Count:**  
+      It also updates a global counter for total requests.
+
+This middleware ensures that every request is tracked, and the statistics are aggregated in a meaningful way.
 
 ## Running Unit Tests
 
-Unit tests are provided in the `/tests` directory. To run them, use the following command:
+Unit tests are provided in the `/tests` directory and cover both the entities (like `GlobalStats`) and services (such as `GlobalStatsService`). To run the tests, use:
 
 ```bash
-php bin/phpunit
+./vendor/bin/phpunit
 ```
 
-This will execute tests for both the entities (like GlobalStats) and services (such as GlobalStatsService).
+The tests validate:
+- The correct behavior of the `incrementValue()` method in `GlobalStats`.
+- The correct aggregation and creation logic in `GlobalStatsService` (using mocks for the Doctrine EntityManager and Repository).
 
 ## Additional Information
 
 - **Environment:**  
-  The Docker setup provides a fast way to spin up the application. Make sure you have Docker and Docker Compose installed.
+  The Docker setup offers a quick way to spin up the application. Make sure you have both Docker and Docker Compose installed.
+- **Extensibility:**  
+  You can further extend the statistics system to include additional metrics such as HTTP methods, status codes, request duration, client IP addresses, or even referer information. This can help you analyze application performance and user behavior in more detail.
+
+---
 
 Enjoy developing and testing our application!
