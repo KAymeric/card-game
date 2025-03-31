@@ -90,10 +90,13 @@ final class CustomMediaController extends AbstractController
             return new JsonResponse(['error' => 'File upload error'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
-        $media = new CustomMedia();
-        $media->setPath('/uploads/' . $filename);
-        $media->setMimeType($file->getMimeType());
-        $media->setUpdatedAt(new \DateTimeImmutable());
+        $media = (new CustomMedia())
+            ->setPath('/publics/uploads')
+            ->setRealname($file->getClientOriginalName())
+            ->setMimeType($file->getClientMimeType())
+            ->setFile($file)
+            ->setStatus('active')
+            ->setUpdatedAt(new \DateTimeImmutable());
 
         $this->entityManager->persist($media);
         $this->entityManager->flush();
@@ -101,31 +104,5 @@ final class CustomMediaController extends AbstractController
         $cache->delete('media_list');
 
         return new JsonResponse(['message' => 'File uploaded', 'path' => $media->getPath()], Response::HTTP_CREATED);
-    }
-
-    /**
-     * @throws InvalidArgumentException
-     */
-    #[Route('/{id}', name: 'media_delete', methods: ['DELETE'])]
-    public function delete(int $id, CustomMediaRepository $mediaRepository, CacheInterface $cache): JsonResponse
-    {
-        $media = $mediaRepository->find($id);
-
-        if (!$media) {
-            return new JsonResponse(['error' => 'Media not found'], Response::HTTP_NOT_FOUND);
-        }
-
-        $filePath = $this->getParameter('kernel.project_dir') . '/public' . $media->getPath();
-        if (file_exists($filePath)) {
-            unlink($filePath);
-        }
-
-        $this->entityManager->remove($media);
-        $this->entityManager->flush();
-
-        $cache->delete('media_' . $id);
-        $cache->delete('media_list');
-
-        return new JsonResponse(['message' => 'Media deleted'], Response::HTTP_NO_CONTENT);
     }
 }

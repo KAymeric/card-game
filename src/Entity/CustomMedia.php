@@ -6,6 +6,7 @@ use ApiPlatform\Metadata\ApiResource;
 use App\Repository\CustomMediaRepository;
 use App\Traits\HistoryTrait;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\HttpFoundation\File\File;
 
 #[ApiResource]
 
@@ -27,6 +28,12 @@ class CustomMedia
 
     #[ORM\Column(length: 255)]
     private ?string $mimeType = null;
+
+    /**
+     * @var File|null
+     * @Vich\UploadableField(mapping="pictures",fileNameProperty="realpath")
+     */
+    private $file;
 
     public function getId(): ?int
     {
@@ -66,6 +73,17 @@ class CustomMedia
     {
         $this->mimeType = $mimeType;
 
+        return $this;
+    }
+
+    public function getFile(): ?File 
+    {
+        return $this->file;
+    }
+    
+    public function setFile(?File $file): ?CustomMedia 
+    {
+        $this->file = $file;
         return $this;
     }
 }
